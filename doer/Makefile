@@ -1,4 +1,4 @@
 CC=gcc -std=gnu11
 
-mlfq: main.c program.c program.h
+doer: main.c utils.c
 	$(CC) -o doer main.c
