@@ -68,8 +68,8 @@ char** str_split(char* a_str, const char a_delim)
     /* Add space for terminating null string so caller
        knows where the list of returned strings ends. */
     count++;
-
-    result = malloc(sizeof(char*) * count);
+    // printf("COUNT ES %d\n", count+1);
+    result = malloc(sizeof(char*) * (count));
 
     if (result)
     {
