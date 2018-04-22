@@ -6,14 +6,15 @@ void mejor_d(int levels, int *bits_uno, int *bits_dos, int *bits_tres, int *bits
     double minima_memoria = INFINITY;
     double memoria;
     if (levels == 1){
-        printf("BITS NIVEL 1: 22\n");
-        printf("ESPACIO UTILIZADO: %f MB \n", pow(2,22)*11/(8*1048576));
+        printf("BITS NIVEL 1: 20\n");
+        printf("ESPACIO UTILIZADO: %f MB \n", pow(2,20)*11/(8*1048576));
+        *bits_uno = 20;
         // ejemplo de como hacer asignaciones => *bits_uno = 15;
     }
     else if (levels == 2){
         
-        for (digitos_1 = 1; digitos_1 < 22; digitos_1 ++){
-            digitos_2 = 22 - digitos_1;
+        for (digitos_1 = 1; digitos_1 < 20; digitos_1 ++){
+            digitos_2 = 20 - digitos_1;
             memoria = pow(2, digitos_1) * digitos_2 + pow(2, digitos_2) * 11;
             if (memoria < minima_memoria){
                 minima_memoria = memoria;
@@ -23,15 +24,15 @@ void mejor_d(int levels, int *bits_uno, int *bits_dos, int *bits_tres, int *bits
 
         }
         printf("BITS NIVEL 1: %i\n", mejor_d_uno);
-        printf("BITS NIVEL 2: %i\n", 22 - mejor_d_uno);  
+        printf("BITS NIVEL 2: %i\n", 20 - mejor_d_uno);  
         printf("ESPACIO UTILIZADO: %f MB \n", minima_memoria/(8*1048576));
         *bits_uno = mejor_d_uno;
-        *bits_dos = 22 - mejor_d_uno;
+        *bits_dos = 20 - mejor_d_uno;
     }
     else if (levels == 3){
-        for (digitos_1 = 1; digitos_1 < 22; digitos_1 ++){
-            for (digitos_2 = 1; digitos_2 < 22 - digitos_1; digitos_2 ++){
-                digitos_3 = 22 - digitos_1 - digitos_2;
+        for (digitos_1 = 1; digitos_1 < 20; digitos_1 ++){
+            for (digitos_2 = 1; digitos_2 < 20 - digitos_1; digitos_2 ++){
+                digitos_3 = 20 - digitos_1 - digitos_2;
                 memoria = pow(2, digitos_1) * digitos_2 + pow(2, digitos_2) * digitos_3 + pow(2, digitos_3) * 11;
                 if (memoria < minima_memoria){
                     minima_memoria = memoria;
@@ -53,10 +54,10 @@ void mejor_d(int levels, int *bits_uno, int *bits_dos, int *bits_tres, int *bits
 
     }
     else if (levels == 4){
-        for (digitos_1 = 1; digitos_1 < 22; digitos_1 ++){
-            for (digitos_2 = 1; digitos_2 < 22 - digitos_1; digitos_2 ++){
-                for (digitos_3 = 1; digitos_3 < 22 - digitos_1 - digitos_2; digitos_3++){
-                    digitos_4 = 22 - digitos_1 - digitos_2 - digitos_3;
+        for (digitos_1 = 1; digitos_1 < 20; digitos_1 ++){
+            for (digitos_2 = 1; digitos_2 < 20 - digitos_1; digitos_2 ++){
+                for (digitos_3 = 1; digitos_3 < 20 - digitos_1 - digitos_2; digitos_3++){
+                    digitos_4 = 20 - digitos_1 - digitos_2 - digitos_3;
                     memoria = pow(2, digitos_1) * digitos_2 + pow(2, digitos_2) * digitos_3 + pow(2, digitos_3) * digitos_4 + pow(2, digitos_4) * 11;
                     if (memoria < minima_memoria){
                         minima_memoria = memoria;
@@ -82,11 +83,11 @@ void mejor_d(int levels, int *bits_uno, int *bits_dos, int *bits_tres, int *bits
     }
     else {
         
-        for (digitos_1 = 1; digitos_1 < 22; digitos_1 ++){
-            for (digitos_2 = 1; digitos_2 < 22 - digitos_1; digitos_2 ++){
-                for (digitos_3 = 1; digitos_3 < 22 - digitos_1 - digitos_2; digitos_3++){
-                    for (digitos_4 = 1; digitos_4 < 22 - digitos_1 - digitos_2 - digitos_3; digitos_4++){
-                        digitos_5 = 22 - digitos_1 - digitos_2 - digitos_3 - digitos_4;
+        for (digitos_1 = 1; digitos_1 < 20; digitos_1 ++){
+            for (digitos_2 = 1; digitos_2 < 20 - digitos_1; digitos_2 ++){
+                for (digitos_3 = 1; digitos_3 < 20 - digitos_1 - digitos_2; digitos_3++){
+                    for (digitos_4 = 1; digitos_4 < 20 - digitos_1 - digitos_2 - digitos_3; digitos_4++){
+                        digitos_5 = 20 - digitos_1 - digitos_2 - digitos_3 - digitos_4;
                         memoria = pow(2, digitos_1) * digitos_2 + pow(2, digitos_2) * digitos_3 + pow(2, digitos_3) * digitos_4 + pow(2, digitos_4) * digitos_5 + pow(2, digitos_5)*11;
                         if (memoria < minima_memoria){
                             minima_memoria = memoria;
