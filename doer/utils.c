@@ -33,8 +33,9 @@ void input_read(char tasks[][255], char* path, int m) {
     int i = 0;
 
     while (fgets(buff, 255, (FILE*)fp1) != NULL){
+    	buff[strcspn(buff, "\r\n")] = 0;
+    	// buff[strcspn(buff, "\"")] = "\\\"";
     	strcpy(tasks[i++], buff);
-    	// printf("buff es %s\n", buff);
     }
 
 }
@@ -69,7 +70,7 @@ char** str_split(char* a_str, const char a_delim)
        knows where the list of returned strings ends. */
     count++;
     // printf("COUNT ES %d\n", count+1);
-    result = malloc(sizeof(char*) * (count));
+    result = malloc(sizeof(char*) * (count+1));
 
     if (result)
     {
