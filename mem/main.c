@@ -23,30 +23,76 @@ int main(int argc, char ** argv){
     //INICIO PARTE 2 //
     //PRIMERO CREAMOS LAS TABLAS //
     Pagina * puntero_tabla_uno;
-    //puntero_tabla_uno = construir_paginas();
+    puntero_tabla_uno = crear_paginas(levels, 1);
 
     TLB * puntero_tlb;
-    puntero_tlb = malloc(sizeof(TLB));
+    puntero_tlb = crear_tlb();
 
+    Pagina * puntero_pagina_inicial;
+  
+    puntero_pagina_inicial = crear_paginas(levels, 1);
+ 
+    MemoriaFisica * ptr_mf;
+    ptr_mf = inicializar_mf();
+    
+    
 
     archivo = argv[2];
     FILE *fp1;
     char buff[255];
     fp1= fopen (archivo, "r");
     char *ptr;
-    long numero; ;
-    while (fgets(buff, 255, (FILE*)fp1) != NULL){
+    long numero;
+    int contador_miss, contador_hit = 0;
+    while (fgets(buff, 256, (FILE*)fp1) != NULL){
+        printf("Contador TLB: %i \n", puntero_tlb -> contador);
         numero = strtol(buff,&ptr, 10);
         printf("Leyendo direccion virtual: %li \n",numero);
-        int en_tlb;
-        en_tlb = buscar_en_tlb(puntero_tlb, 1);
-        char *binario;
+        char *binario, *offset, *v_adress;
         binario = decimal_to_binary(numero);
-        char *offset[8];
-        printf("1\n");
-        determinar_offset(binario, offset);
-        printf("Binario: %s\n",binario);
-        printf("Offset %s \n", offset);
+        
+        offset = malloc(sizeof(char)*8);
+        v_adress = malloc(sizeof(char)*20);
+
+        strncpy(offset, binario + 20, 8);
+        strncpy(v_adress, binario, 20);
+        int n_dvirtual = bstr_to_dec(v_adress);
+        int esta = buscar_en_tlb(puntero_tlb, n_dvirtual);
+        printf("Página virtual: %i, offset: %i \n",n_dvirtual, bstr_to_dec(offset) );
+
+
+
+        if (esta == -1){
+            contador_miss ++;
+            printf("TLB MISS\n");
+            int c = buscar_en_pagina(puntero_pagina_inicial, v_adress, 1, levels);
+            //Estamos en presencia de un TLB miss
+            
+
+
+            if (c == -1){
+                printf("PAGE FAULT\n");
+                unsigned int contenido;
+                contenido = cargar_en_memoria_fisica(ptr_mf, v_adress, offset);
+                actualizar_tlb(puntero_tlb, bstr_to_dec(v_adress), ptr_mf -> contador);
+                ptr_mf -> contador ++;
+                printf("Contenido: %u \n", contenido);
+            }
+
+        }
+        else {
+            printf("TLB HIT\n");
+            printf("Esta en el marco: %i \n", esta);
+            int contenido = ptr_mf -> frames[esta][bstr_to_dec(offset)];
+            printf("Contenido: %u \n", contenido);
+        }
+        printf("\n\n\n\n\n\n");
+
+
+
+
+
+
 
         // if (en_tlb == -1) {
         //     //buscar_en_paginas(, direccion)
