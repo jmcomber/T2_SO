@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "parte_uno.c"
-#include "parte_dos.h"
+#include "parte_dos.c"
 
 
 
@@ -23,7 +23,7 @@ int main(int argc, char ** argv){
     //INICIO PARTE 2 //
     //PRIMERO CREAMOS LAS TABLAS //
     Pagina * puntero_tabla_uno;
-    puntero_tabla_uno = construir_paginas();
+    //puntero_tabla_uno = construir_paginas();
 
     TLB * puntero_tlb;
     puntero_tlb = malloc(sizeof(TLB));
@@ -38,8 +38,16 @@ int main(int argc, char ** argv){
     while (fgets(buff, 255, (FILE*)fp1) != NULL){
         numero = strtol(buff,&ptr, 10);
         printf("Leyendo direccion virtual: %li \n",numero);
-        // int en_tlb;
-        // en_tlb = buscar_en_tlb(puntero_tlb, direccion);
+        int en_tlb;
+        en_tlb = buscar_en_tlb(puntero_tlb, 1);
+        char *binario;
+        binario = decimal_to_binary(numero);
+        char *offset[8];
+        printf("1\n");
+        determinar_offset(binario, offset);
+        printf("Binario: %s\n",binario);
+        printf("Offset %s \n", offset);
+
         // if (en_tlb == -1) {
         //     //buscar_en_paginas(, direccion)
         // }
