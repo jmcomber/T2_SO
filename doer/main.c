@@ -1,15 +1,14 @@
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <time.h>
+#include <sys/time.h>
 #include "procs.h"
 #include "utils.c"
-#include <sys/time.h>
 
 
 #define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
@@ -17,8 +16,7 @@
 /* Global vars start*/
 int m;
 struct timespec inicio, termino;
-extern int errno;
-
+Process* procesos[100];
 /* Global vars end*/
 
 void imprimir_proc(Process* proc) {
@@ -28,12 +26,21 @@ void imprimir_proc(Process* proc) {
 	printf("\n");
 }
 
-void imprimir_estadisticas(Process* procs[]);
+void imprimir_estadisticas();
 
 
 void terminar() {
 	// terminar procesos que están corriendo
-	// imprimir_estadisticas();
+	Process* aux = procesos[0];
+	int u = 0;
+	while (aux != NULL) {
+		if (!aux -> terminated) {
+			kill(aux -> pid, SIGKILL);
+		}
+		aux = procesos[++u];
+	}
+
+	imprimir_estadisticas();
 	exit(0);
 }	
 
@@ -64,6 +71,7 @@ int main(int argc, char * argv []) {
 	for (int i = 0; i < m; i++)
 	{
 		procs[i] = aux;
+		procesos[i] = aux;
 	}
 	
 	
@@ -84,6 +92,7 @@ int main(int argc, char * argv []) {
 			proc -> pid = pid;
 			proc -> terminated = 0;
 			procs[cont_tasks - 1] = proc;
+			procesos[cont_tasks - 1] = proc;
 			/* End init proc */
 		}
 		
@@ -129,23 +138,28 @@ int main(int argc, char * argv []) {
 				}
 			}
 		}
-
 	}
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &termino);
-	imprimir_estadisticas(procs);
+	imprimir_estadisticas();
 
 }
 
-void imprimir_estadisticas(Process* procs[]) {
-	for (int i = 0; i < m; i++) {
-		imprimir_proc(procs[i]);
-	}
+void imprimir_estadisticas() {
+	int u = 0;
+	Process* aux = procesos[0];
+	while (procesos[u] != NULL) {
+		if (procesos[u] -> exit_status != -1) {
+			imprimir_proc(procesos[u++]);
+		} else {
+			printf("El resto de los procesos no alcanzó a comenzar\n");
+			break;
+		}
+	} 
 
 	long long int suma_tiempos = 0;
 	for (int i = 0; i < m; i++) {
-		printf("Sumándole %lu - %lu\n", procs[i] -> end_t.tv_nsec, procs[i] -> start_t.tv_nsec);
-		unsigned int delta_aux = (procs[i] -> end_t.tv_sec - procs[i] -> start_t.tv_sec) * 1000000 + (procs[i] -> end_t.tv_nsec - procs[i] -> start_t.tv_nsec) / 1000;
+		unsigned int delta_aux = (procesos[i] -> end_t.tv_sec - procesos[i] -> start_t.tv_sec) * 1000000 + (procesos[i] -> end_t.tv_nsec - procesos[i] -> start_t.tv_nsec) / 1000;
 		suma_tiempos += delta_aux;
 	}
 	unsigned int delta_us = (termino.tv_sec - inicio.tv_sec) * 1000000 + (termino.tv_nsec - inicio.tv_nsec) / 1000;

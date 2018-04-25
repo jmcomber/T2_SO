@@ -12,3 +12,11 @@ struct proc {
 	char terminated;
 };
 typedef struct proc Process;
+
+struct linked_list
+{
+  Process *puntero_inicio;
+  Process *puntero_final;
+  int count;
+};
+typedef struct linked_list LinkedList;
