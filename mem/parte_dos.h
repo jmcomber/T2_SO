@@ -32,4 +32,4 @@ long determinar_siguiente_cantidad(int nivel_actual);
 int buscar_posicion(char * adress_entera, int nivel_actual);
 long buscar_en_pagina(Pagina * pagina_actual, char * adress_entera, int nivel_actual, int niveles_faltantes);
 MemoriaFisica * inicializar_mf();
-unsigned int cargar_en_memoria_fisica(MemoriaFisica * ptr, char * adress, char * offset);
+int cargar_en_memoria_fisica(MemoriaFisica * ptr, char * adress, char * offset);

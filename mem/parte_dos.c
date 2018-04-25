@@ -182,18 +182,19 @@ MemoriaFisica * inicializar_mf(){
   return ptr;
 }
 
-unsigned int cargar_en_memoria_fisica(MemoriaFisica * ptr_memoria_fisica, char * adress, char * offset){
+int cargar_en_memoria_fisica(MemoriaFisica * ptr_memoria_fisica, char * adress, char * offset){
   FILE *fp1;
-  fp1 = fopen("data", "rb");
+  fp1 = fopen("disco", "rb");
   // Determinamos el adress:
   int numero_pagina = bstr_to_dec(adress);
-  fseek(fp1, numero_pagina, SEEK_SET);
-  unsigned int valor[256];
-  fread(valor, 256, 1, fp1);
-  unsigned int contenido;
+  fseek(fp1, numero_pagina*pow(2,8), SEEK_SET);
+  unsigned char * valor = malloc(sizeof(unsigned int)* 256);
+  fread(valor, sizeof(unsigned int), 256, fp1);
+  int contenido;
   int offset_entero = bstr_to_dec(offset);
 
   for (int k=0; k < 256; k++){
+    int a = (unsigned int) valor[k];
     ptr_memoria_fisica -> frames[ptr_memoria_fisica -> contador][k] = valor[k];
     if (k == offset_entero) {
       contenido = valor[k];
