@@ -8,9 +8,9 @@ int levels;
 int bits_uno, bits_dos, bits_tres, bits_cuatro, bits_cinco;
 
 
-int bstr_to_dec(const char * str)
+long bstr_to_dec(const char * str)
 {
-    int val = 0;
+    long val = 0;
      
     while (*str != '\0')
         val = 2 * val + (*str++ - '0');
@@ -49,10 +49,22 @@ TLB * crear_tlb(){
   puntero_tlb = malloc(sizeof(TLB));
   for (int i=0; i < 64; i ++){
     puntero_tlb -> d_virtual[i] = -1;
+    puntero_tlb -> prioridades_tlb[i] = 0;
   }
   return puntero_tlb;
 
 }
+int determinar_saliente_TLB(TLB* ptr){
+  for (int k = 0; k < 64; k ++){
+    if (ptr -> prioridades_tlb[k] == 0){
+      return k;
+    }
+    
+  }
+  printf("DANGEEER\n");
+ } //me retorna el con prioridad 0
+
+
 
 void determinar_offset(char * binario, char * offset){
   for (int i= 0; i < 8; i ++){
@@ -116,10 +128,10 @@ Pagina * crear_paginas(int niveles_faltantes, int nivel_actual){
   }
   else {
     puntero_tabla_1 -> entradas_fisicas = malloc(sizeof(Pagina)*total_entradas); 
-    puntero_tabla_1 -> dirty_bit = malloc(sizeof(int)*total_entradas);
+    puntero_tabla_1 -> valid_bit = malloc(sizeof(int)*total_entradas);
     for (int i=0; i < total_entradas; i++){
       puntero_tabla_1 -> entradas_fisicas[i] = -1;
-      puntero_tabla_1 -> dirty_bit[i] = 0; //0 es "virgen", 1 es modificada
+      puntero_tabla_1 -> valid_bit[i] = 0; //0 es "virgen", 1 es modificada
 
     }
   }
@@ -130,47 +142,59 @@ Pagina * crear_paginas(int niveles_faltantes, int nivel_actual){
 
 int buscar_posicion(char * adress_entera, int nivel_actual){
   char * aux;
+
   if (nivel_actual == 1){
     aux = malloc(sizeof(char)*bits_uno);
     strncpy(aux, adress_entera + 20 - bits_uno, bits_uno);
+    aux[bits_uno] = '\0';
+    printf("Aux: %s\n", aux);
     return (int) bstr_to_dec(aux);
   }
   else if (nivel_actual == 2){
     aux = malloc(sizeof(char)*bits_dos);
-    strncpy(aux, adress_entera + 20 - bits_uno -bits_dos, bits_dos);
+    strncpy(aux, adress_entera + 20 - bits_uno - bits_dos, bits_dos);
+    aux[bits_dos] = '\0';
+    printf("Aux: %s\n", aux);
     return (int) bstr_to_dec(aux);
   }
   else if (nivel_actual == 3){
 
     aux = malloc(sizeof(char)*bits_tres);
     strncpy(aux, adress_entera + 20 - bits_uno -bits_dos -bits_tres, bits_tres);
+    aux[bits_tres] = '\0';
+    printf("Aux: %s\n", aux);
     return (int) bstr_to_dec(aux);
   }
   else if (nivel_actual == 4){
 
     aux = malloc(sizeof(char)*bits_cuatro);
     strncpy(aux, adress_entera + 20 - bits_uno -bits_dos -bits_tres - bits_cuatro, bits_cuatro);
+    aux[bits_cuatro] = '\0';
+    printf("Aux: %s\n", aux);
     return (int) bstr_to_dec(aux);
   }
   else {
 
     aux = malloc(sizeof(char)*bits_cinco);
     strncpy(aux, adress_entera , bits_cinco);
+    aux[bits_cinco] = '\0';
     return (int) bstr_to_dec(aux);
   }
 
 }
 
-long buscar_en_pagina(Pagina * pagina_actual, char * adress_entera, int nivel_actual, int niveles_faltantes){
+int buscar_en_pagina(Pagina * pagina_actual, char * adress_entera, int nivel_actual, int niveles_faltantes){
+  printf("Buscando en el nivel: %i la direccion %s \n",nivel_actual, adress_entera );
   if (niveles_faltantes > 1){
-    long pos;
+    int pos;
     pos = buscar_posicion(adress_entera, nivel_actual);
     return buscar_en_pagina(pagina_actual -> entradas[pos], adress_entera, nivel_actual + 1, niveles_faltantes -1);
   }
   else{
-    long pos;
-    pos = buscar_posicion(adress_entera, nivel_actual);
-    if (pagina_actual -> dirty_bit[pos] == 0){ //retornar solo no esta sucio
+    
+    int pos = buscar_posicion(adress_entera, nivel_actual);
+    
+    if (pagina_actual -> valid_bit[pos] == 0){ //retornar solo no esta sucio
       return pagina_actual -> entradas_fisicas[pos];
     }
     else {
@@ -189,7 +213,7 @@ MemoriaFisica * inicializar_mf(){
   }
   return ptr;
 }
- int determinar_saliente(MemoriaFisica * ptr){
+int determinar_saliente(MemoriaFisica * ptr){
   int minima;
   for (int k = 0; k < 256; k ++){
     if (ptr -> prioridades[k] == 0){
@@ -236,13 +260,11 @@ int cargar_en_memoria_fisica(MemoriaFisica * ptr_memoria_fisica, char * adress, 
 
 void actualizar_tlb(TLB * puntero_tlb, int v_adress, int marco_fisico){
   // Esto es provisorio, por implementar: LRU
-  puntero_tlb -> d_virtual[puntero_tlb -> contador] = v_adress;
-  puntero_tlb -> d_fisica[puntero_tlb -> contador] = marco_fisico;
+  int nueva_pos = determinar_saliente_TLB(puntero_tlb);
+  puntero_tlb -> d_virtual[nueva_pos] = v_adress;
+  puntero_tlb -> d_fisica[nueva_pos] = marco_fisico;
 
-  puntero_tlb -> contador ++;
-  if (puntero_tlb -> contador > 63){
-    puntero_tlb -> contador = 0;
-  }
+
 }
 
 void actualizar_tabla_paginas(Pagina * pagina_actual, char * adress_entera, int nivel_actual, int niveles_faltantes, int n_frame){
@@ -258,11 +280,11 @@ void actualizar_tabla_paginas(Pagina * pagina_actual, char * adress_entera, int 
   }
 }
 
-void marcar_como_sucia(Pagina * pagina_actual, int curr_level, int levels_faltantes, int numero_frame){
+void marcar_como_invalida(Pagina * pagina_actual, int curr_level, int levels_faltantes, int numero_frame){
   if (levels_faltantes > 1){
     int n_entradas = determinar_siguiente_cantidad(curr_level);
     for (int i= 0; i < n_entradas; i ++){
-      marcar_como_sucia(pagina_actual -> entradas[i], curr_level + 1, levels_faltantes - 1, numero_frame);
+      marcar_como_invalida(pagina_actual -> entradas[i], curr_level + 1, levels_faltantes - 1, numero_frame);
     }
   }
   else {
@@ -270,7 +292,7 @@ void marcar_como_sucia(Pagina * pagina_actual, int curr_level, int levels_faltan
     int n_entradas = determinar_siguiente_cantidad(curr_level);
     for (int i= 0; i < n_entradas; i ++){
       if (pagina_actual -> entradas_fisicas[i] == numero_frame) {
-        pagina_actual -> dirty_bit[i] = 1; //asignamos en el caso que tenga el mismo frame
+        pagina_actual -> valid_bit[i] = 1; //asignamos en el caso que tenga el mismo frame
       }
     }
 

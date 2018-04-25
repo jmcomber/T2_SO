@@ -47,17 +47,24 @@ int main(int argc, char ** argv){
     while (fgets(buff, 256, (FILE*)fp1) != NULL){
         numero = strtol(buff,&ptr, 10);
         printf("Leyendo direccion virtual: %li \n",numero);
-        char *binario, *offset, *v_adress;
+        char *binario;
+        char *offset, *v_adress;
         binario = decimal_to_binary(numero);
         
         offset = malloc(sizeof(char)*8);
         v_adress = malloc(sizeof(char)*20);
-
         strncpy(offset, binario + 20, 8);
         strncpy(v_adress, binario, 20);
+        offset[9] = '\0';
+        v_adress[20] = '\0';
+
+        printf("Adress: %s \n", v_adress);
+        printf("offset: %s \n", offset);
+    
+
         int n_dvirtual = bstr_to_dec(v_adress);
         int esta = buscar_en_tlb(puntero_tlb, n_dvirtual);
-        printf("Página virtual: %i, offset: %i \n",n_dvirtual, bstr_to_dec(offset) );
+        printf("Página virtual: %i, offset: %i \n",n_dvirtual, bstr_to_dec(offset));
 
 
 
@@ -66,7 +73,7 @@ int main(int argc, char ** argv){
             contador_miss ++;
             printf("TLB MISS\n");
             int c = buscar_en_pagina(puntero_pagina_inicial, v_adress, 1, levels);
-            
+            printf("Se cae despues de esto\n");
 
 
             if (c == -1){
@@ -76,9 +83,9 @@ int main(int argc, char ** argv){
                 int nuevo_frame_fisico =  determinar_saliente(ptr_mf);
                 contenido = cargar_en_memoria_fisica(ptr_mf, v_adress, offset);
                 printf("Contenido: %i \n", contenido);
-                //actualizar_tlb(puntero_tlb, bstr_to_dec(v_adress), ptr_mf -> contador);
+                actualizar_tlb(puntero_tlb, bstr_to_dec(v_adress), nuevo_frame_fisico);
                 actualizar_tabla_paginas(puntero_pagina_inicial, v_adress, 1, levels, nuevo_frame_fisico);
-                //marcar_como_sucia(puntero_pagina_inicial, 1, levels, ptr_mf -> contador);
+                marcar_como_invalida(puntero_pagina_inicial, 1, levels, nuevo_frame_fisico);
     
 
             }
@@ -90,6 +97,7 @@ int main(int argc, char ** argv){
                 printf("PAGE HIT\n");
                 int contenido = ptr_mf -> frames[c][bstr_to_dec(offset)];
                 printf("Contenido: %i \n", contenido);
+                actualizar_prioridades(ptr_mf, c); //memoria fisica
 
             }
 
@@ -98,6 +106,7 @@ int main(int argc, char ** argv){
             printf("TLB HIT\n");
             int contenido = ptr_mf -> frames[esta][bstr_to_dec(offset)];
             printf("Contenido: %i \n", contenido);
+            actualizar_prioridades(ptr_mf, esta); //memoria fisica
         }
         printf("\n\n\n\n\n\n");
 
@@ -111,7 +120,8 @@ int main(int argc, char ** argv){
         //     //buscar_en_paginas(, direccion)
         // }
     }
-    for(int i; i < 256; i++){
-            printf("Prioridad [%i]: %i \n", i, ptr_mf -> prioridades[i]);
-        }
+    // for (int i=0; i < 10; i ++){
+    //     printf("Prioridad[%i]: %i\n",i, ptr_mf -> prioridades[i]);
+    // }
+
 }
