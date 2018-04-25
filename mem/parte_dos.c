@@ -116,8 +116,11 @@ Pagina * crear_paginas(int niveles_faltantes, int nivel_actual){
   }
   else {
     puntero_tabla_1 -> entradas_fisicas = malloc(sizeof(Pagina)*total_entradas); 
+    puntero_tabla_1 -> dirty_bit = malloc(sizeof(int)*total_entradas);
     for (int i=0; i < total_entradas; i++){
       puntero_tabla_1 -> entradas_fisicas[i] = -1;
+      puntero_tabla_1 -> dirty_bit[i] = 0; //0 es "virgen", 1 es modificada
+
     }
   }
  
@@ -167,7 +170,12 @@ long buscar_en_pagina(Pagina * pagina_actual, char * adress_entera, int nivel_ac
   else{
     long pos;
     pos = buscar_posicion(adress_entera, nivel_actual);
-    return pagina_actual -> entradas_fisicas[pos];
+    if (pagina_actual -> dirty_bit[pos] == 0){ //retornar solo no esta sucio
+      return pagina_actual -> entradas_fisicas[pos];
+    }
+    else {
+      return -1;
+    }
 
   }
 }
@@ -175,13 +183,33 @@ long buscar_en_pagina(Pagina * pagina_actual, char * adress_entera, int nivel_ac
 MemoriaFisica * inicializar_mf(){
   MemoriaFisica * ptr;
   ptr = malloc(sizeof(MemoriaFisica));
-  ptr -> contador = 0;
   for (int i = 0; i < 256; i ++){
-    ptr -> frames[i] = malloc(sizeof(unsigned int)*256);
+    ptr -> frames[i] = malloc(sizeof(int)*256);
+    ptr -> prioridades[i] = 0;
   }
   return ptr;
 }
+ int determinar_saliente(MemoriaFisica * ptr){
+  int minima;
+  for (int k = 0; k < 256; k ++){
+    if (ptr -> prioridades[k] == 0){
+      return k;
+    }
+    
+  }
+  printf("DANGEEER\n");
+ } //me retorna el con prioridad 0
 
+void actualizar_prioridades(MemoriaFisica * ptr_memoria_fisica, int recien){
+  for (int i; i < 255; i ++){
+    if (ptr_memoria_fisica -> prioridades[i] > 0) {
+      if (i != recien) {
+        ptr_memoria_fisica -> prioridades[i] --;
+      }
+    }
+  }
+  ptr_memoria_fisica -> prioridades[recien] = 255;
+}
 int cargar_en_memoria_fisica(MemoriaFisica * ptr_memoria_fisica, char * adress, char * offset){
   FILE *fp1;
   fp1 = fopen("disco", "rb");
@@ -192,26 +220,59 @@ int cargar_en_memoria_fisica(MemoriaFisica * ptr_memoria_fisica, char * adress, 
   fread(valor, sizeof(unsigned int), 256, fp1);
   int contenido;
   int offset_entero = bstr_to_dec(offset);
+  int saliente = determinar_saliente(ptr_memoria_fisica);
 
   for (int k=0; k < 256; k++){
     int a = (unsigned int) valor[k];
-    ptr_memoria_fisica -> frames[ptr_memoria_fisica -> contador][k] = valor[k];
+    ptr_memoria_fisica -> frames[saliente][k] = valor[k];
     if (k == offset_entero) {
       contenido = valor[k];
     } 
   }
   fclose(fp1);
+  actualizar_prioridades(ptr_memoria_fisica, saliente);
   return contenido;
 }
 
-actualizar_tlb(TLB * puntero_tlb, int v_adress, int marco_fisico){
+void actualizar_tlb(TLB * puntero_tlb, int v_adress, int marco_fisico){
   // Esto es provisorio, por implementar: LRU
-  printf("Actualizando TLB\n");
   puntero_tlb -> d_virtual[puntero_tlb -> contador] = v_adress;
   puntero_tlb -> d_fisica[puntero_tlb -> contador] = marco_fisico;
-  printf("Sume el par %i, %i \n", v_adress, marco_fisico);
+
   puntero_tlb -> contador ++;
   if (puntero_tlb -> contador > 63){
     puntero_tlb -> contador = 0;
+  }
+}
+
+void actualizar_tabla_paginas(Pagina * pagina_actual, char * adress_entera, int nivel_actual, int niveles_faltantes, int n_frame){
+  if (niveles_faltantes > 1){
+    long pos;
+    pos = buscar_posicion(adress_entera, nivel_actual);
+    return actualizar_tabla_paginas(pagina_actual -> entradas[pos], adress_entera, nivel_actual + 1, niveles_faltantes -1, n_frame);
+  }
+  else{
+    long pos;
+    pos = buscar_posicion(adress_entera, nivel_actual);
+    pagina_actual -> entradas_fisicas[pos] = n_frame;
+  }
+}
+
+void marcar_como_sucia(Pagina * pagina_actual, int curr_level, int levels_faltantes, int numero_frame){
+  if (levels_faltantes > 1){
+    int n_entradas = determinar_siguiente_cantidad(curr_level);
+    for (int i= 0; i < n_entradas; i ++){
+      marcar_como_sucia(pagina_actual -> entradas[i], curr_level + 1, levels_faltantes - 1, numero_frame);
+    }
+  }
+  else {
+    
+    int n_entradas = determinar_siguiente_cantidad(curr_level);
+    for (int i= 0; i < n_entradas; i ++){
+      if (pagina_actual -> entradas_fisicas[i] == numero_frame) {
+        pagina_actual -> dirty_bit[i] = 1; //asignamos en el caso que tenga el mismo frame
+      }
+    }
+
   }
 }

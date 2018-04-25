@@ -45,7 +45,6 @@ int main(int argc, char ** argv){
     long numero;
     int contador_miss, contador_hit = 0;
     while (fgets(buff, 256, (FILE*)fp1) != NULL){
-        printf("Contador TLB: %i \n", puntero_tlb -> contador);
         numero = strtol(buff,&ptr, 10);
         printf("Leyendo direccion virtual: %li \n",numero);
         char *binario, *offset, *v_adress;
@@ -63,28 +62,42 @@ int main(int argc, char ** argv){
 
 
         if (esta == -1){
+            //Estamos en presencia de un TLB miss
             contador_miss ++;
             printf("TLB MISS\n");
             int c = buscar_en_pagina(puntero_pagina_inicial, v_adress, 1, levels);
-            //Estamos en presencia de un TLB miss
             
 
 
             if (c == -1){
+                // CON UNA PAGE FAULT
                 printf("PAGE FAULT\n");
                 unsigned int contenido;
+                int nuevo_frame_fisico =  determinar_saliente(ptr_mf);
                 contenido = cargar_en_memoria_fisica(ptr_mf, v_adress, offset);
-                actualizar_tlb(puntero_tlb, bstr_to_dec(v_adress), ptr_mf -> contador);
-                ptr_mf -> contador ++;
-                printf("Contenido: %u \n", contenido);
+                printf("Contenido: %i \n", contenido);
+                //actualizar_tlb(puntero_tlb, bstr_to_dec(v_adress), ptr_mf -> contador);
+                actualizar_tabla_paginas(puntero_pagina_inicial, v_adress, 1, levels, nuevo_frame_fisico);
+                //marcar_como_sucia(puntero_pagina_inicial, 1, levels, ptr_mf -> contador);
+    
+
+            }
+
+
+            else {
+                // EN C está la direccion fisica donde se encuentra, en este caso el marco
+                //Aqui buscamos en el marco 
+                printf("PAGE HIT\n");
+                int contenido = ptr_mf -> frames[c][bstr_to_dec(offset)];
+                printf("Contenido: %i \n", contenido);
+
             }
 
         }
         else {
             printf("TLB HIT\n");
-            printf("Esta en el marco: %i \n", esta);
             int contenido = ptr_mf -> frames[esta][bstr_to_dec(offset)];
-            printf("Contenido: %u \n", contenido);
+            printf("Contenido: %i \n", contenido);
         }
         printf("\n\n\n\n\n\n");
 
@@ -98,4 +111,7 @@ int main(int argc, char ** argv){
         //     //buscar_en_paginas(, direccion)
         // }
     }
+    for(int i; i < 256; i++){
+            printf("Prioridad [%i]: %i \n", i, ptr_mf -> prioridades[i]);
+        }
 }
