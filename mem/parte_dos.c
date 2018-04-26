@@ -11,7 +11,6 @@ int bits_uno, bits_dos, bits_tres, bits_cuatro, bits_cinco;
 long bstr_to_dec(const char * str)
 {
     long val = 0;
-     
     while (*str != '\0')
         val = 2 * val + (*str++ - '0');
     return val;
@@ -49,20 +48,38 @@ TLB * crear_tlb(){
   puntero_tlb = malloc(sizeof(TLB));
   for (int i=0; i < 64; i ++){
     puntero_tlb -> d_virtual[i] = -1;
-    puntero_tlb -> prioridades_tlb[i] = 0;
+    puntero_tlb -> d_fisica[i] = -1;
   }
+  LinkedList* list = malloc(sizeof(LinkedList));
+  list -> count = 0;
+  list -> first = NULL;
+  list -> last = NULL;
+  puntero_tlb -> lista_usadas = list;
   return puntero_tlb;
 
 }
-int determinar_saliente_TLB(TLB* ptr){
-  for (int k = 0; k < 64; k ++){
-    if (ptr -> prioridades_tlb[k] == 0){
-      return k;
+int determinar_saliente_TLB(TLB* puntero_tlb){
+  // CASO 1: Hay menos de 64 entradas en la cola //
+  if (puntero_tlb -> lista_usadas -> count < 64){ 
+    for (int k=0; k < 64; k++){
+      if (puntero_tlb -> d_virtual[k] == -1){
+        return k;
+      }
     }
-    
   }
-  printf("DANGEEER\n");
- } //me retorna el con prioridad 0
+   // CASO 2: Hay 64 en la entrada, por lo cual hay que sacar el primero
+  else {
+   
+    Node * salida;
+    salida = puntero_tlb -> lista_usadas -> first;
+     printf("TLB LLENA, DEBE SALIR PAGINA: %i\n", salida -> pagina_virtual);
+    for (int k=0; k < 64; k++){
+      if (puntero_tlb -> d_virtual[k] == salida -> pagina_virtual){
+        return k;
+      }
+    }
+  }
+ } 
 
 
 
@@ -87,12 +104,14 @@ void imprimir_tlb(TLB * puntero){
     }
 }
 int buscar_en_tlb(TLB * puntero_tlb, int n_direccion){
-    for (int i=0; i < 64; i ++){
-        if (puntero_tlb -> d_virtual[i] == n_direccion){
-            return puntero_tlb -> d_fisica[i];
-        }
+  printf("Buscando pagina virtual %i \n", n_direccion);
+  for (int i = 0; i < 64; i ++){
+    if (puntero_tlb -> d_virtual[i] == n_direccion){
+      return puntero_tlb -> d_fisica[i];
     }
-    return -1;
+
+  }
+  return -1;
 }
 
 long determinar_siguiente_cantidad(int nivel_actual){
@@ -147,14 +166,12 @@ int buscar_posicion(char * adress_entera, int nivel_actual){
     aux = malloc(sizeof(char)*bits_uno);
     strncpy(aux, adress_entera + 20 - bits_uno, bits_uno);
     aux[bits_uno] = '\0';
-    printf("Aux: %s\n", aux);
     return (int) bstr_to_dec(aux);
   }
   else if (nivel_actual == 2){
     aux = malloc(sizeof(char)*bits_dos);
     strncpy(aux, adress_entera + 20 - bits_uno - bits_dos, bits_dos);
     aux[bits_dos] = '\0';
-    printf("Aux: %s\n", aux);
     return (int) bstr_to_dec(aux);
   }
   else if (nivel_actual == 3){
@@ -162,7 +179,6 @@ int buscar_posicion(char * adress_entera, int nivel_actual){
     aux = malloc(sizeof(char)*bits_tres);
     strncpy(aux, adress_entera + 20 - bits_uno -bits_dos -bits_tres, bits_tres);
     aux[bits_tres] = '\0';
-    printf("Aux: %s\n", aux);
     return (int) bstr_to_dec(aux);
   }
   else if (nivel_actual == 4){
@@ -170,7 +186,6 @@ int buscar_posicion(char * adress_entera, int nivel_actual){
     aux = malloc(sizeof(char)*bits_cuatro);
     strncpy(aux, adress_entera + 20 - bits_uno -bits_dos -bits_tres - bits_cuatro, bits_cuatro);
     aux[bits_cuatro] = '\0';
-    printf("Aux: %s\n", aux);
     return (int) bstr_to_dec(aux);
   }
   else {
@@ -184,14 +199,13 @@ int buscar_posicion(char * adress_entera, int nivel_actual){
 }
 
 int buscar_en_pagina(Pagina * pagina_actual, char * adress_entera, int nivel_actual, int niveles_faltantes){
-  printf("Buscando en el nivel: %i la direccion %s \n",nivel_actual, adress_entera );
   if (niveles_faltantes > 1){
     int pos;
     pos = buscar_posicion(adress_entera, nivel_actual);
     return buscar_en_pagina(pagina_actual -> entradas[pos], adress_entera, nivel_actual + 1, niveles_faltantes -1);
   }
   else{
-    
+  
     int pos = buscar_posicion(adress_entera, nivel_actual);
     
     if (pagina_actual -> valid_bit[pos] == 0){ //retornar solo no esta sucio
@@ -209,32 +223,59 @@ MemoriaFisica * inicializar_mf(){
   ptr = malloc(sizeof(MemoriaFisica));
   for (int i = 0; i < 256; i ++){
     ptr -> frames[i] = malloc(sizeof(int)*256);
-    ptr -> prioridades[i] = 0;
   }
+  LinkedList* list = malloc(sizeof(LinkedList));
+  list -> count = 0;
+  list -> first = NULL;
+  list -> last = NULL;
+  ptr -> lista_accesos = list;
   return ptr;
 }
 int determinar_saliente(MemoriaFisica * ptr){
-  int minima;
-  for (int k = 0; k < 256; k ++){
-    if (ptr -> prioridades[k] == 0){
-      return k;
-    }
-    
-  }
-  printf("DANGEEER\n");
- } //me retorna el con prioridad 0
+  // if (ptr -> lista_accesos -> count < 256){
+  //   printf("ACA\n");
+  //   return ptr -> lista_accesos -> count;
+  // }
+  // else{
+  // //Definimos que marco fisico es, ojo que pagina virtual es solo el nombre
+  //   int marco_fisico = ptr -> lista_accesos -> first -> pagina_virtual;
+  //   ptr -> lista_accesos -> first = ptr-> lista_accesos -> first -> next;
+  //   return marco_fisico;
+  // }
+
+}
 
 void actualizar_prioridades(MemoriaFisica * ptr_memoria_fisica, int recien){
-  for (int i; i < 255; i ++){
-    if (ptr_memoria_fisica -> prioridades[i] > 0) {
-      if (i != recien) {
-        ptr_memoria_fisica -> prioridades[i] --;
-      }
-    }
-  }
-  ptr_memoria_fisica -> prioridades[recien] = 255;
+  //   if (ptr -> lista_usadas -> count == 0){
+  //   linkedlist_append(ptr_memoria_fisica -> lista_accesos, pagina_encontrada);
+  // }
+  // else {
+  //   //Revisamos que no este
+  //   Node * curr;
+  //   int esta = 0;
+  //   curr = ptr -> lista_usadas -> first;
+  //   for (int i = 0; i < ptr -> lista_usadas -> count; i ++){
+  //       if (curr -> pagina_virtual == pagina_encontrada){
+  //           eliminar_nodo(ptr -> lista_usadas, i);
+  //           linkedlist_append(ptr -> lista_usadas, pagina_encontrada);
+  //           esta = 1;
+  //           break;
+  //       }
+  //       curr = curr -> next; 
+  //   }
+  //   if (!esta){
+  //     if (ptr -> lista_usadas -> count < 63){
+  //       linkedlist_append(ptr -> lista_usadas, pagina_encontrada);
+  //     }
+  //     else {
+  //       eliminar_nodo(ptr -> lista_usadas, 0);
+  //       linkedlist_append(ptr -> lista_usadas, pagina_encontrada);
+  //     }
+  //   }
+
+  // }
 }
-int cargar_en_memoria_fisica(MemoriaFisica * ptr_memoria_fisica, char * adress, char * offset){
+int cargar_en_memoria_fisica(MemoriaFisica * ptr_memoria_fisica, char * adress, char * offset, int frame_a_copiar){
   FILE *fp1;
   fp1 = fopen("disco", "rb");
   // Determinamos el adress:
@@ -244,27 +285,24 @@ int cargar_en_memoria_fisica(MemoriaFisica * ptr_memoria_fisica, char * adress, 
   fread(valor, sizeof(unsigned int), 256, fp1);
   int contenido;
   int offset_entero = bstr_to_dec(offset);
-  int saliente = determinar_saliente(ptr_memoria_fisica);
+  printf("Estoy copiando del disco en la posicion: %i \n", frame_a_copiar);
 
   for (int k=0; k < 256; k++){
     int a = (unsigned int) valor[k];
-    ptr_memoria_fisica -> frames[saliente][k] = valor[k];
+    ptr_memoria_fisica -> frames[frame_a_copiar][k] = valor[k];
     if (k == offset_entero) {
       contenido = valor[k];
     } 
   }
   fclose(fp1);
-  actualizar_prioridades(ptr_memoria_fisica, saliente);
+  linkedlist_append(ptr_memoria_fisica -> lista_accesos, frame_a_copiar);
   return contenido;
 }
 
 void actualizar_tlb(TLB * puntero_tlb, int v_adress, int marco_fisico){
-  // Esto es provisorio, por implementar: LRU
   int nueva_pos = determinar_saliente_TLB(puntero_tlb);
   puntero_tlb -> d_virtual[nueva_pos] = v_adress;
   puntero_tlb -> d_fisica[nueva_pos] = marco_fisico;
-
-
 }
 
 void actualizar_tabla_paginas(Pagina * pagina_actual, char * adress_entera, int nivel_actual, int niveles_faltantes, int n_frame){
@@ -297,4 +335,97 @@ void marcar_como_invalida(Pagina * pagina_actual, int curr_level, int levels_fal
     }
 
   }
+}
+
+void actualizar_prioridades_tlb(TLB * ptr, int pagina_encontrada){
+  if (ptr -> lista_usadas -> count == 0){
+    linkedlist_append(ptr -> lista_usadas, pagina_encontrada);
+  }
+  else {
+    //Revisamos que no este
+    Node * curr;
+    int esta = 0;
+    curr = ptr -> lista_usadas -> first;
+    for (int i = 0; i < ptr -> lista_usadas -> count; i ++){
+        if (curr -> pagina_virtual == pagina_encontrada){
+            eliminar_nodo(ptr -> lista_usadas, i);
+            linkedlist_append(ptr -> lista_usadas, pagina_encontrada);
+            esta = 1;
+            break;
+        }
+        curr = curr -> next; 
+    }
+    if (!esta){
+      if (ptr -> lista_usadas -> count < 64){
+        linkedlist_append(ptr -> lista_usadas, pagina_encontrada);
+      }
+      else {
+        eliminar_nodo(ptr -> lista_usadas, 0);
+        linkedlist_append(ptr -> lista_usadas, pagina_encontrada);
+      }
+    }
+
+  }
+}
+
+Node* node_init(int value)
+{
+  // Creo el nodo
+  Node* node = malloc(sizeof(Node));
+
+  // Le agrego el valor y le pongo next = NULL
+  node -> pagina_virtual = value;
+  node -> next = NULL;
+
+  // Retorno el nodo
+  return node;
+}
+
+void eliminar_nodo(LinkedList * list, int position){
+  if (position == 0)
+  {
+    Node* first = list -> first;
+    list -> first = first -> next;
+    free(first);
+  }
+  else
+  {
+    Node* last = list -> first;
+    for (int i = 1; i < position; i++)
+    {
+      last = last -> next;
+    }
+    Node* actual = last -> next;
+    last -> next = actual -> next;
+    if (position == list -> count - 1)
+    {
+      list -> last = last;
+    }
+  }
+
+  list -> count--;
+}
+void linkedlist_append(LinkedList* list, int pagina_virtual)
+{
+  // Creo el nodo a agregar
+  Node* node = node_init(pagina_virtual);
+
+  // Si la lista esta vacia
+  if (list -> count == 0)
+  {
+    // Hago que sea el primer nodo
+    list -> first = node;
+  }
+  // Sino,
+  else
+  {
+    // Hago que sea el siguiente del ultimo
+    list -> last -> next = node;
+  }
+
+  // Ahora este nodo es el ultimo
+  list -> last = node;
+
+  // Agrego 1 a la cuenta
+  list -> count++;
 }

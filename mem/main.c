@@ -43,10 +43,11 @@ int main(int argc, char ** argv){
     fp1= fopen (archivo, "r");
     char *ptr;
     long numero;
-    int contador_miss, contador_hit = 0;
+    int contador_page_fault, contador_hit, contador_total = 0;
     while (fgets(buff, 256, (FILE*)fp1) != NULL){
         numero = strtol(buff,&ptr, 10);
         printf("Leyendo direccion virtual: %li \n",numero);
+        contador_total ++;
         char *binario;
         char *offset, *v_adress;
         binario = decimal_to_binary(numero);
@@ -64,29 +65,37 @@ int main(int argc, char ** argv){
 
         int n_dvirtual = bstr_to_dec(v_adress);
         int esta = buscar_en_tlb(puntero_tlb, n_dvirtual);
-        printf("Página virtual: %i, offset: %i \n",n_dvirtual, bstr_to_dec(offset));
+        printf("Página virtual: %i, offset: %li \n",n_dvirtual, bstr_to_dec(offset));
 
 
 
         if (esta == -1){
             //Estamos en presencia de un TLB miss
-            contador_miss ++;
+            
             printf("TLB MISS\n");
+            // en c guardamos el marco fisico
             int c = buscar_en_pagina(puntero_pagina_inicial, v_adress, 1, levels);
-            printf("Se cae despues de esto\n");
 
 
             if (c == -1){
                 // CON UNA PAGE FAULT
                 printf("PAGE FAULT\n");
+                contador_page_fault ++;
                 unsigned int contenido;
                 int nuevo_frame_fisico =  determinar_saliente(ptr_mf);
-                contenido = cargar_en_memoria_fisica(ptr_mf, v_adress, offset);
+                contenido = cargar_en_memoria_fisica(ptr_mf, v_adress, offset, nuevo_frame_fisico);
                 printf("Contenido: %i \n", contenido);
-                actualizar_tlb(puntero_tlb, bstr_to_dec(v_adress), nuevo_frame_fisico);
+                //------------ MANEJO TLB -------------------------------------------------//
+                //------------ me encargo de agregar el par () ----------------------------//
+                actualizar_tlb(puntero_tlb, n_dvirtual, nuevo_frame_fisico);
+                //------------ y de appendear a la lista LRU-- ----------------------------//
+                actualizar_prioridades_tlb(puntero_tlb, n_dvirtual);
+                //------------ FIN MANEJO TLB ----------------------------------------------//
+
                 actualizar_tabla_paginas(puntero_pagina_inicial, v_adress, 1, levels, nuevo_frame_fisico);
                 marcar_como_invalida(puntero_pagina_inicial, 1, levels, nuevo_frame_fisico);
-    
+                //actualizar_prioridades(ptr_mf, nuevo_frame_fisico);
+
 
             }
 
@@ -99,14 +108,36 @@ int main(int argc, char ** argv){
                 printf("Contenido: %i \n", contenido);
                 actualizar_prioridades(ptr_mf, c); //memoria fisica
 
+                //------------ MANEJO TLB ----------------------------------------------//
+                actualizar_tlb(puntero_tlb, bstr_to_dec(v_adress), c);
+                //------------ FIN MANEJO TLB ----------------------------------------------//
+
+                actualizar_prioridades_tlb(puntero_tlb, n_dvirtual);
+
             }
 
         }
         else {
             printf("TLB HIT\n");
+            contador_hit ++;
             int contenido = ptr_mf -> frames[esta][bstr_to_dec(offset)];
             printf("Contenido: %i \n", contenido);
             actualizar_prioridades(ptr_mf, esta); //memoria fisica
+            //------------ MANEJO TLB ----------------------------//
+            actualizar_prioridades_tlb(puntero_tlb, n_dvirtual);
+            //------------ FIN MANEJO TLB ------------------------//
+        }
+        
+        Node * curr;
+        curr =  puntero_tlb -> lista_usadas -> first;
+        printf("Imprimiendo lista ligada\n");
+        for (int i=0; i < puntero_tlb -> lista_usadas -> count; i ++){
+            printf("Posicion [%i] esta %i \n",i, curr -> pagina_virtual);
+            curr = curr -> next;;
+        }
+        printf("Y ahora imprimimos la TLB\n");
+        for (int j = 0; j < 64; j++){
+            printf("(%i,%i)\n", puntero_tlb -> d_virtual[j], puntero_tlb -> d_fisica[j]);
         }
         printf("\n\n\n\n\n\n");
 
@@ -115,13 +146,14 @@ int main(int argc, char ** argv){
 
 
 
-
+    
         // if (en_tlb == -1) {
         //     //buscar_en_paginas(, direccion)
         // }
     }
-    // for (int i=0; i < 10; i ++){
-    //     printf("Prioridad[%i]: %i\n",i, ptr_mf -> prioridades[i]);
-    // }
+    printf("PORCENTAJE_PAGE_FAULTS = %%%d \n", 100*contador_page_fault/contador_total);
+    printf("PORCENTAJE_TLB_HITS =  %%%d \n", 100*contador_hit/contador_total);
+
+
 
 }
