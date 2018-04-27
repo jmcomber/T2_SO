@@ -51,7 +51,7 @@ struct memoria_fisica {
 typedef struct memoria_fisica MemoriaFisica;
 
 void getBin(int num, char *str);
-long bstr_to_dec(const char * str);
+int bstr_to_dec(const char * str);
 void imprimir_tlb();
 Pagina * crear_paginas(int niveles_faltantes, int nivel_actual);
 long determinar_siguiente_cantidad(int nivel_actual);
@@ -68,3 +68,4 @@ void actualizar_prioridades_tlb(TLB * ptr, int pagina_virtual);
 Node * node_init(int value);
 void linkedlist_append(LinkedList* list, int marco_fisico);
 void eliminar_nodo(LinkedList * list, int position);
+char* concat(const char *s1, const char *s2);
