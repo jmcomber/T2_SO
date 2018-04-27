@@ -1,17 +1,4 @@
 
-Tenemos arreglo con las tasks. Tenemos cuántos son, tenemos cuántos procesos pueden correr al mismo tiempo.
 
-Dejando de lado las estadísticas por ahora, podemos hacer un while (quedan tasks y quedan procesos libres*) ejecutar siguiente task.
+PROBLEMA: SI UN ARGUMENTO ESTÁ EN COMILLAS NO HAY QUE SEPARAR POR ESPACIOS? PERO HAY PROBLEMA CON COMILLAS IGUAL
 
-
-*: cálculo de libres tiene que ser variable en padre que, cuando retorne el wait de algún hijo, aumente en 1, y cuando haga exec otro hijo disminuya 1. 
-
-if ((pid = waitpid(pid, &status, 1)) == 0)
-
-
-
-PROBLEMA: SI UN ARGUMENTO ESTÁ EN COMILLAS NO HAY QUE SEPARAR POR ESPACIOS
-
-
-
-pipe solo agarrando el primer proceso, el resto se está imprimiendo normal, y no guardando en foo

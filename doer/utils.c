@@ -29,18 +29,35 @@ void input_read(char tasks[][255], char* path, int m) {
 	FILE *fp1;
     char buff[255];
     char* pch;
-    fp1 = fopen (path, "r");
+    fp1 = fopen(path, "r");
     int i = 0;
 
     while (fgets(buff, 255, (FILE*)fp1) != NULL){
-    	buff[strcspn(buff, "\r\n")] = 0;
-    	// buff[strcspn(buff, "\"")] = "\\\"";
-    	strcpy(tasks[i++], buff);
+    	int quote_idx = strcspn(buff, "\"");
+    	if (strlen(buff) != quote_idx) { // hay quote
+    		buff[strcspn(buff, "\"")] = 32;
+    		buff[strcspn(buff, "\"")] = 32;
+    		buff[strcspn(buff, "\r\n")] = 0;
+    		for (int o=0; o<quote_idx; o++) {
+    			tasks[i][o] = buff[o];
+    		}
+    		int c = quote_idx;
+    		int j = quote_idx;
+    		while (buff[j] != 0) {
+    			if (buff[j] != 32) {
+    				tasks[i][c++] = buff[j];
+    			}
+    			j++;
+    		}
+    		tasks[i][j] = 0;
+    		i++;
+    	} else {
+    		buff[strcspn(buff, "\r\n")] = 0;
+    		strcpy(tasks[i++], buff);
+    	}	
     }
 
 }
-
-
 
 char** str_split(char* a_str, const char a_delim)
 {
@@ -69,7 +86,6 @@ char** str_split(char* a_str, const char a_delim)
     /* Add space for terminating null string so caller
        knows where the list of returned strings ends. */
     count++;
-    // printf("COUNT ES %d\n", count+1);
     result = malloc(sizeof(char*) * (count+1));
 
     if (result)
@@ -79,11 +95,11 @@ char** str_split(char* a_str, const char a_delim)
 
         while (token)
         {
-            assert(idx < count);
+            // assert(idx < count);
             *(result + idx++) = strdup(token);
             token = strtok(0, delim);
         }
-        assert(idx == count - 1);
+        // assert(idx == count - 1);
         *(result + idx) = 0;
     }
 

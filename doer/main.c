@@ -19,6 +19,16 @@ struct timespec inicio, termino;
 Process* procesos[100];
 /* Global vars end*/
 
+void liberar(Process* procs[]) {
+	for (int i=0; i<m; i++) {
+		if (procs[i] != NULL && sizeof(procs[i]) == sizeof(Process)) {
+			free(procs[i] -> output);
+			free(procs[i]);
+		}
+	}
+}
+
+
 void imprimir_proc(Process* proc) {
 	printf("Instrucción: %s\n", proc -> task);
 	printf("Exit code: %d\n", proc -> exit_status);
@@ -47,6 +57,11 @@ void terminar() {
 
 
 int main(int argc, char * argv []) {
+
+	if (argc != 3) {
+		printf("Usage: ./doer <input.txt> <N>\n");
+		return 1;
+	}
 	
 	signal(SIGINT, terminar);
 
@@ -65,7 +80,7 @@ int main(int argc, char * argv []) {
 	
 	/*Procs array*/
 	Process* procs[m];
-	Process* aux;
+	Process* aux = malloc(sizeof(Process));
 	aux -> terminated = -1;
 	aux -> exit_status = -1;
 	for (int i = 0; i < m; i++)
@@ -73,8 +88,6 @@ int main(int argc, char * argv []) {
 		procs[i] = aux;
 		procesos[i] = aux;
 	}
-	
-	
 
 	while (cont_tasks < m) {
 		int pipes[2];
@@ -107,7 +120,7 @@ int main(int argc, char * argv []) {
 		else {
 			for (int i=0; i<m; i++) {
 				int status;
-				if (procs[i] -> pid > 0 && !procs[i] -> terminated && waitpid(procs[i] -> pid, &status, 1) == 0) { /*Si terminó, liberar cupo y setear end_t */
+				if (procs[i] -> terminated > -1 && !procs[i] -> terminated && waitpid(procs[i] -> pid, &status, 1) == 0) { /*Si terminó, liberar cupo y setear end_t */
 					clock_gettime(CLOCK_MONOTONIC_RAW, &procs[i] -> end_t);
 					// printf("Al final de proceso %s end_t es %lu ns\n", procs[i] -> task, procs[i] -> end_t.tv_nsec);
 					procs[i] -> terminated = 1;
@@ -142,6 +155,8 @@ int main(int argc, char * argv []) {
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &termino);
 	imprimir_estadisticas();
+	free(aux);
+	liberar(procesos);
 
 }
 

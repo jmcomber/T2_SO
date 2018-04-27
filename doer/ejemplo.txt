@@ -1,4 +1,4 @@
 ls -al
 echo something
 ps T
-date "+DATE: %Y-%m-%d%nTIME: %H:%M:%S"
+date "+DATE:%Y-%m-%d%n TIME:%H:%M:%S"
