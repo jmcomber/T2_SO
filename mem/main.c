@@ -41,7 +41,9 @@ int main(int argc, char ** argv){
     fp1= fopen (archivo, "r");
     char *ptr;
     long numero;
-    int contador_page_fault, contador_hit, contador_total = 0;
+    int contador_page_fault = 0;
+    int contador_hit = 0;
+    int contador_total = 0;
     while (fgets(buff, 256, (FILE*)fp1) != NULL){
         numero = strtol(buff,&ptr, 10);
         printf("-%li-\n",numero);
@@ -50,8 +52,8 @@ int main(int argc, char ** argv){
         char *offset, *v_adress;
         binario = decimal_to_binary(numero);
         
-        offset = malloc(sizeof(char)*8);
-        v_adress = malloc(sizeof(char)*20);
+        offset = malloc(sizeof(char)*8 + 1);
+        v_adress = malloc(sizeof(char)*20 + 1);
         strncpy(offset, binario + 20, 8);
         strncpy(v_adress, binario, 20);
         offset[8] = '\0';
@@ -61,7 +63,8 @@ int main(int argc, char ** argv){
     
 
         int n_dvirtual = bstr_to_dec(v_adress);
-        int esta = buscar_en_tlb(puntero_tlb, n_dvirtual);
+        int esta;
+        esta = buscar_en_tlb(puntero_tlb, n_dvirtual);
         //printf("Página virtual: %i, offset: %i \n",n_dvirtual, bstr_to_dec(offset));
 
 
@@ -153,14 +156,7 @@ int main(int argc, char ** argv){
         free(offset);
         free(v_adress);
         free(binario);
-
-
-
-
-
-
-    
-        // if (en_tlb == -1) {
+            // if (en_tlb == -1) {
         //     //buscar_en_paginas(, direccion)
         // }
     }

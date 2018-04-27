@@ -109,8 +109,8 @@ void imprimir_tlb(TLB * puntero){
         for (int contador= 0; contador < 64; contador++){
             char * adress_entera = decimal_to_binary(puntero -> d_virtual[contador]);
             char * n1, * n2;
-            n1 = malloc(sizeof(char)*bits_uno);
-            n2 = malloc(sizeof(char)*bits_dos);
+            n1 = malloc(sizeof(char)*bits_uno + 1);
+            n2 = malloc(sizeof(char)*bits_dos + 1);
             strncpy(n1, adress_entera + 8, bits_uno);
             strncpy(n2, adress_entera + 8 + bits_uno, bits_dos);
             n1[bits_uno] = '\0';
@@ -129,9 +129,9 @@ void imprimir_tlb(TLB * puntero){
         for (int contador= 0; contador < 64; contador++){
             char * adress_entera = decimal_to_binary(puntero -> d_virtual[contador]);
             char * n1, * n2, * n3;
-            n1 = malloc(sizeof(char)*bits_uno);
-            n2 = malloc(sizeof(char)*bits_dos);
-            n3 = malloc(sizeof(char)*bits_tres);
+            n1 = malloc(sizeof(char)*bits_uno + 1);
+            n2 = malloc(sizeof(char)*bits_dos + 1);
+            n3 = malloc(sizeof(char)*bits_tres + 1);
             strncpy(n1, adress_entera + 8, bits_uno);
             strncpy(n2, adress_entera + 8 + bits_uno, bits_dos);
             strncpy(n3, adress_entera + 8 + bits_uno + bits_dos, bits_tres);
@@ -153,10 +153,10 @@ void imprimir_tlb(TLB * puntero){
         for (int contador= 0; contador < 64; contador++){
             char * adress_entera = decimal_to_binary(puntero -> d_virtual[contador]);
             char * n1, * n2, * n3, * n4;
-            n1 = malloc(sizeof(char)*bits_uno);
-            n2 = malloc(sizeof(char)*bits_dos);
-            n3 = malloc(sizeof(char)*bits_tres);
-            n4 = malloc(sizeof(char)*bits_cuatro);
+            n1 = malloc(sizeof(char)*bits_uno +1);
+            n2 = malloc(sizeof(char)*bits_dos +1);
+            n3 = malloc(sizeof(char)*bits_tres +1);
+            n4 = malloc(sizeof(char)*bits_cuatro +1);
             strncpy(n1, adress_entera + 8, bits_uno);
             strncpy(n2, adress_entera + 8 + bits_uno, bits_dos);
             strncpy(n3, adress_entera + 8 + bits_uno + bits_dos, bits_tres);
@@ -180,11 +180,11 @@ void imprimir_tlb(TLB * puntero){
         for (int contador= 0; contador < 64; contador++){
             char * adress_entera = decimal_to_binary(puntero -> d_virtual[contador]);
             char * n1, * n2, * n3, * n4, * n5;
-            n1 = malloc(sizeof(char)*bits_uno);
-            n2 = malloc(sizeof(char)*bits_dos);
-            n3 = malloc(sizeof(char)*bits_tres);
-            n4 = malloc(sizeof(char)*bits_cuatro);
-            n5 = malloc(sizeof(char)*bits_cinco);
+            n1 = malloc(sizeof(char)*bits_uno+1);
+            n2 = malloc(sizeof(char)*bits_dos+1);
+            n3 = malloc(sizeof(char)*bits_tres+1);
+            n4 = malloc(sizeof(char)*bits_cuatro+1);
+            n5 = malloc(sizeof(char)*bits_cinco+1);
             strncpy(n1, adress_entera + 8, bits_uno);
             strncpy(n2, adress_entera + 8 + bits_uno, bits_dos);
             strncpy(n3, adress_entera + 8 + bits_uno + bits_dos, bits_tres);
@@ -266,34 +266,34 @@ int buscar_posicion(char * adress_entera, int nivel_actual){
   char * aux;
 
   if (nivel_actual == 1){
-    aux = malloc(sizeof(char)*bits_uno);
+    aux = malloc(sizeof(char)*bits_uno+1);
     strncpy(aux, adress_entera, bits_uno);
     aux[bits_uno] = '\0';
     return (int) bstr_to_dec(aux);
   }
   else if (nivel_actual == 2){
-    aux = malloc(sizeof(char)*bits_dos);
+    aux = malloc(sizeof(char)*bits_dos+1);
     strncpy(aux, adress_entera + bits_uno, bits_dos);
     aux[bits_dos] = '\0';
     return (int) bstr_to_dec(aux);
   }
   else if (nivel_actual == 3){
 
-    aux = malloc(sizeof(char)*bits_tres);
+    aux = malloc(sizeof(char)*bits_tres+1);
     strncpy(aux, adress_entera + bits_uno + bits_dos, bits_tres);
     aux[bits_tres] = '\0';
     return (int) bstr_to_dec(aux);
   }
   else if (nivel_actual == 4){
 
-    aux = malloc(sizeof(char)*bits_cuatro);
+    aux = malloc(sizeof(char)*bits_cuatro+1);
     strncpy(aux, adress_entera + bits_uno + bits_dos + bits_tres, bits_cuatro);
     aux[bits_cuatro] = '\0';
     return (int) bstr_to_dec(aux);
   }
   else {
 
-    aux = malloc(sizeof(char)*bits_cinco);
+    aux = malloc(sizeof(char)*bits_cinco+1);
     strncpy(aux, adress_entera + bits_uno + bits_dos + bits_tres + bits_cuatro, bits_cinco);
     aux[bits_cinco] = '\0';
     return (int) bstr_to_dec(aux);
@@ -383,7 +383,7 @@ void actualizar_prioridades(MemoriaFisica * ptr_memoria_fisica, int frame_fisico
 }
 int cargar_en_memoria_fisica(MemoriaFisica * ptr_memoria_fisica, char * adress, char * offset, int frame_a_copiar){
   FILE *fp1;
-  fp1 = fopen("disco", "rb");
+  fp1 = fopen("disco.bin", "rb");
   // Determinamos el adress:
   int numero_pagina = bstr_to_dec(adress);
   fseek(fp1, numero_pagina*pow(2,8), SEEK_SET);
