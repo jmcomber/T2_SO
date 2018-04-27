@@ -22,8 +22,6 @@ int main(int argc, char ** argv){
 
     //INICIO PARTE 2 //
     //PRIMERO CREAMOS LAS TABLAS //
-    Pagina * puntero_tabla_uno;
-    puntero_tabla_uno = crear_paginas(levels, 1);
 
     TLB * puntero_tlb;
     puntero_tlb = crear_tlb();
@@ -152,6 +150,9 @@ int main(int argc, char ** argv){
         // }
 
         printf("\n\n");
+        free(offset);
+        free(v_adress);
+        free(binario);
 
 
 
@@ -166,6 +167,14 @@ int main(int argc, char ** argv){
     printf("PORCENTAJE_PAGE_FAULTS = %d %%\n", 100*contador_page_fault/contador_total);
     printf("PORCENTAJE_TLB_HITS =  %d %%\n", 100*contador_hit/contador_total);
     imprimir_tlb(puntero_tlb);
+    // free(bits_uno_ptr);
+    // free(bits_dos_ptr);
+    // free(bits_tres_ptr);
+    // free(bits_cuatro_ptr);
+    // free(bits_cinco_ptr);
+    free(puntero_tlb);
+    free(ptr_mf);
+    free(puntero_pagina_inicial);
 
 
 
