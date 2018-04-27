@@ -383,7 +383,7 @@ void actualizar_prioridades(MemoriaFisica * ptr_memoria_fisica, int frame_fisico
 }
 int cargar_en_memoria_fisica(MemoriaFisica * ptr_memoria_fisica, char * adress, char * offset, int frame_a_copiar){
   FILE *fp1;
-  fp1 = fopen("disco.bin", "rb");
+  fp1 = fopen("/home/felipe/Escritorio/T2_SO/mem/disco.bin", "rb");
   // Determinamos el adress:
   int numero_pagina = bstr_to_dec(adress);
   fseek(fp1, numero_pagina*pow(2,8), SEEK_SET);
