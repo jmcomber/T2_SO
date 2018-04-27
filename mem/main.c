@@ -168,8 +168,8 @@ int main(int argc, char ** argv){
     // free(bits_tres_ptr);
     // free(bits_cuatro_ptr);
     // free(bits_cinco_ptr);
-    free(puntero_tlb);
-    free(ptr_mf);
+    free(puntero_tlb -> lista_usadas);
+    free(ptr_mf -> lista_accesos);
     free(puntero_pagina_inicial);
 
 
