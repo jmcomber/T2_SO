@@ -21,6 +21,7 @@ int n_lines(char* path) {
 	if (ch == '\n') {
 		lines--;
 	}
+	fclose(fp);
 	return lines;
 }
 
@@ -37,7 +38,12 @@ void input_read(char tasks[][255], char* path, int m) {
     	if (strlen(buff) != quote_idx) { // hay quote
     		buff[strcspn(buff, "\"")] = 32;
     		buff[strcspn(buff, "\"")] = 32;
-    		buff[strcspn(buff, "\r\n")] = 0;
+    		if (strcspn(buff, "\r\n") < strlen(buff)) {
+    			buff[strcspn(buff, "\r\n")] = 0;
+    		} else {
+    			buff[strlen(buff)] = 0;
+    		}
+    		
     		for (int o=0; o<quote_idx; o++) {
     			tasks[i][o] = buff[o];
     		}
@@ -49,14 +55,15 @@ void input_read(char tasks[][255], char* path, int m) {
     			}
     			j++;
     		}
-    		tasks[i][j] = 0;
+    		tasks[i][c] = 0;
     		i++;
     	} else {
     		buff[strcspn(buff, "\r\n")] = 0;
+    		// buff[strlen(buff)] = 0;
     		strcpy(tasks[i++], buff);
     	}	
     }
-
+    fclose(fp1);
 }
 
 char** str_split(char* a_str, const char a_delim)

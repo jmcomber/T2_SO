@@ -21,7 +21,7 @@ Process* procesos[100];
 
 void liberar(Process* procs[]) {
 	for (int i=0; i<m; i++) {
-		if (procs[i] != NULL && sizeof(procs[i]) == sizeof(Process)) {
+		if (procs[i] != NULL && sizeof(procs[i]) != 0) {
 			free(procs[i] -> output);
 			free(procs[i]);
 		}
@@ -32,6 +32,9 @@ void liberar(Process* procs[]) {
 void imprimir_proc(Process* proc) {
 	printf("Instrucción: %s\n", proc -> task);
 	printf("Exit code: %d\n", proc -> exit_status);
+	// if (!proc -> output) {
+	// 	proc -> output = "-";
+	// }
 	printf("Output: %s\n", proc -> output);
 	printf("\n");
 }
@@ -72,7 +75,6 @@ int main(int argc, char * argv []) {
 	printf("Hay que ejecutar %d tareas\n", m);
 	char tasks[m][255];
 	input_read(tasks, path, m);
-	
 	int cont_procs = 0;
 	int cont_tasks = 0;
 
@@ -95,20 +97,19 @@ int main(int argc, char * argv []) {
 		cont_procs++;
 		cont_tasks++;
 		pid_t pid = fork();
-
 		if (pid != 0) {
 			/*Start init proc*/
-			Process* proc = malloc(sizeof(Process));
-			strcpy(proc -> task, tasks[cont_tasks - 1]);
+			Process* proc = calloc(1, sizeof(Process));
+			memcpy(proc -> task, tasks[cont_tasks - 1], sizeof(tasks[cont_tasks - 1]));
 			clock_gettime(CLOCK_MONOTONIC_RAW, &proc -> start_t);
-			// printf("En proceso %s start_t es %lu ns\n", proc -> task, proc -> start_t.tv_nsec);
+			proc -> exit_status = -1;
+			proc -> terminated = -1;
 			proc -> pid = pid;
 			proc -> terminated = 0;
 			procs[cont_tasks - 1] = proc;
 			procesos[cont_tasks - 1] = proc;
 			/* End init proc */
 		}
-		
 		if (pid == 0) {
 			dup2(pipes[1], STDOUT_FILENO);
 			close(pipes[0]);
@@ -120,9 +121,8 @@ int main(int argc, char * argv []) {
 		else {
 			for (int i=0; i<m; i++) {
 				int status;
-				if (procs[i] -> terminated > -1 && !procs[i] -> terminated && waitpid(procs[i] -> pid, &status, 1) == 0) { /*Si terminó, liberar cupo y setear end_t */
+				if (procs[i] -> terminated > -1 && !procs[i] -> terminated && waitpid(procs[i] -> pid, &status, 1) == 0) { /*Si terminó, abrir cupo y setear end_t */
 					clock_gettime(CLOCK_MONOTONIC_RAW, &procs[i] -> end_t);
-					// printf("Al final de proceso %s end_t es %lu ns\n", procs[i] -> task, procs[i] -> end_t.tv_nsec);
 					procs[i] -> terminated = 1;
 					procs[i] -> exit_status = WEXITSTATUS(status);
 					close(pipes[1]);
@@ -139,7 +139,7 @@ int main(int argc, char * argv []) {
 			printf("CONT_PROCS == N\n");
 			for (int i=0; i<m; i++) {
 				int status;
-				if (procs[i] -> pid > 0 && !procs[i] -> terminated && waitpid(procs[i] -> pid, &status, 1) == 0) { /*Si terminó, liberar cupo y setear end_t */
+				if (procs[i] -> terminated > -1 && !procs[i] -> terminated && waitpid(procs[i] -> pid, &status, 1) == 0) { /*Si terminó, abrir cupo y setear end_t */
 					clock_gettime(CLOCK_MONOTONIC_RAW, &procs[i] -> end_t);
 					procs[i] -> terminated = 1;
 					procs[i] -> exit_status = WEXITSTATUS(status);
@@ -156,8 +156,7 @@ int main(int argc, char * argv []) {
 	clock_gettime(CLOCK_MONOTONIC_RAW, &termino);
 	imprimir_estadisticas();
 	free(aux);
-	liberar(procesos);
-
+	liberar(procs);
 }
 
 void imprimir_estadisticas() {
