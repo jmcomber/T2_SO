@@ -124,7 +124,11 @@ int main(int argc, char * argv []) {
 				if (procs[i] -> terminated > -1 && !procs[i] -> terminated && waitpid(procs[i] -> pid, &status, 1) == 0) { /*Si terminó, abrir cupo y setear end_t */
 					clock_gettime(CLOCK_MONOTONIC_RAW, &procs[i] -> end_t);
 					procs[i] -> terminated = 1;
-					procs[i] -> exit_status = WEXITSTATUS(status);
+					if (WIFEXITED(status) != 0) {
+						procs[i] -> exit_status = WEXITSTATUS(status);
+					} else {
+						procs[i] -> exit_status = 0;
+					}
 					close(pipes[1]);
 					char* foo = calloc(16384, sizeof(char));
 					int nbytes = read(pipes[0], foo, 16384);
