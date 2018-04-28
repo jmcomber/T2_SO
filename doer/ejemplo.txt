@@ -1,0 +1,4 @@
+ls -al
+echo something
+date "+DATE:%Y-%m-%d%n TIME:%H:%M:%S"
+ps T
